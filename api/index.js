@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const User = require("./models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(
 );
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 
 mongoose.connect(process.env.MONGODB_URL);
 
@@ -52,17 +54,30 @@ app.post('/login', async (req,res)=>{
       if(passOk){
         jwt.sign({email: userDoc.email, id: userDoc._id}, jwtSecret, {}, (err, token)=>{
           if(err) throw err;
-          res.cookie('token', token).json('pass ok');
+          res.cookie('token', token).json(userDoc);
         });
         
       }else{
         res.status(422).json('pass not ok')
       }
     }else{
-      res.json('not found');
+      res.status(422).json('not found');
     }
   } catch (error) {
     
+  }
+})
+
+app.get('/profile', (req, res)=>{
+  const {token} = req.cookies;
+  if(token){
+    jwt.verify(token, jwtSecret, {}, async (err, userData)=>{
+      if (err) throw err;
+      const {name, email, _id} = await User.findById(userData.id);
+      res.json({name, email, _id});
+    })
+  }else{
+    res.json(null);
   }
 })
 
