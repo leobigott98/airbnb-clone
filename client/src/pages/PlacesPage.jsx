@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Perks from "../components/Perks";
+import axios from "axios";
 
 export default function PlacesPage() {
   const { action } = useParams();
@@ -30,6 +31,15 @@ export default function PlacesPage() {
         {inputDescription(description)}
       </>
     );
+  }
+
+  async function addPhotoByLink(e){
+    e.preventDefault();
+    const {data:filename} = await axios.post('/upload-by-link', {link: photoLink})
+    setAddedPhotos((prev)=>{
+      return[...prev, filename]
+    });
+    setPhotoLink('')
   }
 
   return (
@@ -84,12 +94,17 @@ export default function PlacesPage() {
                 onChange={(e) => setPhotoLink(e.target.value)}
                 placeholder="Add using a link ...jpg"
               />
-              <button className="bg-gray-200 px-4 rounded-2xl">
+              <button onClick={addPhotoByLink} className="bg-gray-200 px-4 rounded-2xl">
                 Add&nbsp;photo
               </button>
             </div>
-            <div className="mt-2 grid grid-cols-3 md:grid-col-4 lg:grid-cols-6">
-              <button className="flex gap-1 justify-center border bg-transparent rounded-2xl p-8 text-2xl text-gray-600">
+            <div className="mt-2 grid gap-2 grid-cols-3 md:grid-col-4 lg:grid-cols-6">
+              {addedPhotos.length > 0 && addedPhotos.map((link)=>(
+                <div key={link}>
+                  <img className="rounded-2xl" src={'http://localhost:4000/uploads/'+link} alt=""/>
+                </div>
+              ))}
+              <button className="flex items-center gap-1 justify-center border bg-transparent rounded-2xl p-2 text-2xl text-gray-600">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
